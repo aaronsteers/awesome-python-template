@@ -28,6 +28,7 @@ dev = [
     "pytest-cov>=4.0",
     "ruff>=0.1.0",
     "poethepoet>=0.24.0",
+    "deptry>=0.12.0",
 ]
 
 [build-system]
@@ -48,7 +49,7 @@ test-unit = "pytest -m unit"
 test-integration = "pytest -m integration"
 
 # Combined tasks
-check = ["format-check", "lint", "test"]
+check = ["format-check", "lint", "deps", "test"]
 fix = ["format", "lint --fix"]
 
 # Build and install
@@ -72,7 +73,53 @@ cmd = "echo 'Type checking not yet configured - consider adding mypy'"
 help = "Run security checks with bandit"  
 cmd = "echo 'Security scanning not yet configured - consider adding bandit'"
 
+[tool.poe.tasks.deps]
+help = "Check for unused and missing dependencies"
+cmd = "deptry ."
+
 # Pre-commit style combined task
 [tool.poe.tasks.pre-commit]
 help = "Run all pre-commit checks"
 sequence = ["format", "lint", "test-fast"]
+
+# Deptry configuration for dependency analysis
+# https://deptry.com/
+# Search "deptry" in this repo to find where to ignore false positives
+[tool.deptry]
+# Files and directories to exclude from analysis (regex patterns)
+exclude = [
+    ".*\\.venv/.*",
+    ".*venv/.*", 
+    ".*__pycache__.*",
+    ".*\\.pytest_cache.*",
+    ".*\\.git.*",
+    ".*dist.*",
+    ".*build.*",
+    ".*docs.*",
+]
+
+# Additional excludes beyond defaults
+extend_exclude = [
+    # Add additional patterns here if needed
+]
+
+# Mark these dependency groups as development dependencies (PEP 621)
+pep621_dev_dependency_groups = ["dev"]
+
+# Ignore Jupyter notebooks
+ignore_notebooks = false
+
+# Known first-party modules (your own packages)
+known_first_party = [
+    "awesome_python_template",
+]
+
+# To ignore specific error codes globally, uncomment and modify:
+ignore = ["DEP004"]  # Ignore misplaced dev dependencies (common for test frameworks like pytest)
+
+# To ignore specific packages for specific rules, use CLI options:
+# Examples:
+# --per-rule-ignores DEP001=package-name    # Ignore missing dependency
+# --per-rule-ignores DEP002=unused-package  # Ignore unused dependency  
+# --per-rule-ignores DEP003=transitive-dep  # Ignore transitive dependency
+# --per-rule-ignores DEP004=dev-package     # Ignore misplaced dev dependency

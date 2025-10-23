@@ -8,6 +8,7 @@ A modern Python project template with best practices and cutting-edge tooling.
 - **🏗️ Source layout** with `src/{library-name}` structure
 - **🧪 pytest** for comprehensive testing
 - **🎨 ruff** for lightning-fast linting and formatting
+- **🔍 deptry** for dependency analysis and unused dependency detection
 - **⚡ PoeThePoet** for task automation
 - **🤖 GitHub Actions** with PR welcome messages and slash command support
 - **📋 Dedicated config files** instead of cramming everything into pyproject.toml
@@ -46,9 +47,10 @@ A modern Python project template with best practices and cutting-edge tooling.
 - `poe lint` - Check code style and quality
 - `poe format` - Format code with ruff
 - `poe format-check` - Check if code is properly formatted
+- `poe deps` - Check for unused and missing dependencies
 
 ### Convenience Tasks  
-- `poe check` - Run format check, linting, and tests
+- `poe check` - Run format check, linting, dependency check, and tests
 - `poe fix` - Auto-format and fix linting issues
 - `poe pre-commit` - Run pre-commit style checks
 
@@ -129,7 +131,21 @@ Development dependencies are defined in `pyproject.toml`:
 - **pytest** - Testing framework
 - **pytest-cov** - Coverage reporting
 - **ruff** - Linting and formatting
+- **deptry** - Dependency analysis
 - **poethepoet** - Task runner
+
+### Dependency Analysis
+
+This template includes `deptry` for detecting unused and missing dependencies. To ignore false positives, search for "deptry" in the repository and update the configuration in `pyproject.toml`:
+
+```toml
+[tool.deptry]
+# To ignore specific error codes globally:
+ignore = ["DEP004"]  # Example: ignore misplaced dev dependencies
+
+# To ignore specific packages, use CLI options in poe tasks:
+# poe deps --per-rule-ignores DEP002=package-name
+```
 
 ## 🎯 Best Practices
 

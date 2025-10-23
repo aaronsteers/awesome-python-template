@@ -28,7 +28,8 @@ jobs:
             - \`/poe test-fast\` - Run tests with fast exit on first failure
             - \`/poe lint\` - Check code style and quality  
             - \`/poe format\` - Format code with ruff
-            - \`/poe check\` - Run format check, linting, and tests
+            - \`/poe deps\` - Check for unused and missing dependencies
+            - \`/poe check\` - Run format check, linting, dependency check, and tests
 
             ### Quick Fixes
             - \`/poe fix\` - Auto-format and fix linting issues

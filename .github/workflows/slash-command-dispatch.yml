@@ -64,7 +64,7 @@ jobs:
           
           # List of allowed tasks - whitelist approach
           case "$TASK" in
-            test|test-fast|test-cov|test-unit|test-integration|lint|format|format-check|check|fix|install|install-prod|build|clean|version|docs|docs-serve|typecheck|security|pre-commit)
+            test|test-fast|test-cov|test-unit|test-integration|lint|format|format-check|check|fix|install|install-prod|build|clean|version|docs|docs-serve|typecheck|security|deps|pre-commit)
               echo "task=$TASK" >> $GITHUB_OUTPUT
               ;;
             *)

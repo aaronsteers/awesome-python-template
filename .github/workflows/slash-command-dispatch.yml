@@ -1,0 +1,148 @@
+name: Slash Command Dispatch
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  slash-command-dispatch:
+    runs-on: ubuntu-latest
+    if: >
+      github.event.issue.pull_request &&
+      startsWith(github.event.comment.body, '/poe')
+    steps:
+      - name: Slash Command Processor
+        uses: aaronsteers/poe-command-processor@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          reaction-token: ${{ secrets.GITHUB_TOKEN }}
+          command: ${{ github.event.comment.body }}
+          repository: ${{ github.repository }}
+          issue-number: ${{ github.event.issue.number }}
+          comment-id: ${{ github.event.comment.id }}
+          actor: ${{ github.event.comment.user.login }}
+
+  process-poe-command:
+    runs-on: ubuntu-latest
+    if: >
+      github.event.issue.pull_request &&
+      startsWith(github.event.comment.body, '/poe')
+    steps:
+      - name: Add reaction
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const reaction = '👀';
+            await github.rest.reactions.createForIssueComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: ${{ github.event.comment.id }},
+              content: reaction
+            });
+
+      - name: Get PR info
+        id: pr-info
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: ${{ github.event.issue.number }}
+            });
+            
+            core.setOutput('ref', pr.data.head.ref);
+            core.setOutput('sha', pr.data.head.sha);
+
+      - name: Checkout PR
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.pr-info.outputs.ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v2
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: uv sync --extra dev
+
+      - name: Extract command
+        id: extract-command
+        run: |
+          COMMENT_BODY="${{ github.event.comment.body }}"
+          # Remove /poe prefix and extract task name
+          TASK=$(echo "$COMMENT_BODY" | sed 's|^/poe[[:space:]]*||' | awk '{print $1}')
+          echo "task=$TASK" >> $GITHUB_OUTPUT
+
+      - name: Run poe task
+        id: run-task
+        run: |
+          TASK="${{ steps.extract-command.outputs.task }}"
+          if [ -z "$TASK" ]; then
+            echo "No task specified. Available tasks:"
+            uv run poe
+            exit 1
+          fi
+          
+          echo "Running poe task: $TASK"
+          uv run poe "$TASK" 2>&1 | tee output.txt
+          
+          # Capture exit code
+          EXIT_CODE=${PIPESTATUS[0]}
+          echo "exit_code=$EXIT_CODE" >> $GITHUB_OUTPUT
+          
+          # Read output for comment
+          OUTPUT=$(cat output.txt)
+          echo "output<<EOF" >> $GITHUB_OUTPUT
+          echo "$OUTPUT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Comment result
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const task = '${{ steps.extract-command.outputs.task }}';
+            const exitCode = '${{ steps.run-task.outputs.exit_code }}';
+            const output = `${{ steps.run-task.outputs.output }}`;
+            
+            const emoji = exitCode === '0' ? '✅' : '❌';
+            const status = exitCode === '0' ? 'succeeded' : 'failed';
+            
+            const comment = `${emoji} **Poe task \`${task}\` ${status}**
+
+            <details>
+            <summary>Command output</summary>
+
+            \`\`\`
+            ${output}
+            \`\`\`
+
+            </details>`;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: ${{ github.event.issue.number }},
+              body: comment
+            });
+
+      - name: Add final reaction
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const exitCode = '${{ steps.run-task.outputs.exit_code }}';
+            const reaction = exitCode === '0' ? '+1' : '-1';
+            
+            await github.rest.reactions.createForIssueComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: ${{ github.event.comment.id }},
+              content: reaction
+            });

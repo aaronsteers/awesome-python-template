@@ -77,6 +77,8 @@ Use `/poe <task-name>` in PR comments to run tasks:
 - `/poe format` - Format code
 - `/poe check` - Run all checks
 
+**Note**: For security reasons, slash commands run against the base repository code, not the PR changes. This ensures that untrusted code cannot be executed in a privileged environment.
+
 ## 📁 Project Structure
 
 ```

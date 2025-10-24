@@ -8,7 +8,7 @@ lint = "ruff check ."
 format = "ruff format ."
 format-check = "ruff format --check ."
 
-# Testing
+# Testing  
 test = "pytest"
 test-fast = "pytest -x"
 test-cov = "pytest --cov=awesome_python_template --cov-report=html"
@@ -16,7 +16,7 @@ test-unit = "pytest -m unit"
 test-integration = "pytest -m integration"
 
 # Combined tasks
-check = ["format-check", "lint", "test"]
+check = ["format-check", "lint", "deps", "test"]
 fix = ["format", "lint --fix"]
 
 # Build and install
@@ -30,7 +30,7 @@ docs-serve = "echo 'Documentation serving not yet configured'"
 
 # Development helpers
 clean = "rm -rf .pytest_cache .coverage htmlcov dist .ruff_cache"
-version = "echo 'awesome-python-template version:' && python -c 'import awesome_python_template; print(awesome_python_template.__version__)'"
+version = { "shell" = "echo 'awesome-python-template version:' && python -c 'import awesome_python_template; print(awesome_python_template.__version__)'" }
 
 [tool.poe.tasks.typecheck]
 help = "Run type checking with mypy"
@@ -39,6 +39,10 @@ cmd = "echo 'Type checking not yet configured - consider adding mypy'"
 [tool.poe.tasks.security]
 help = "Run security checks with bandit"  
 cmd = "echo 'Security scanning not yet configured - consider adding bandit'"
+
+[tool.poe.tasks.deps]
+help = "Check for unused and missing dependencies"
+cmd = "deptry ."
 
 # Pre-commit style combined task
 [tool.poe.tasks.pre-commit]

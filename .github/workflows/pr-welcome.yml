@@ -12,42 +12,20 @@ jobs:
   welcome:
     runs-on: ubuntu-latest
     steps:
-      - name: Welcome message
-        uses: actions/github-script@v7
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Read welcome message
+        id: welcome-message
+        run: |
+          {
+            echo "message<<EOF"
+            cat .github/pr-welcome-message.md
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
+
+      - name: Create welcome comment
+        uses: peter-evans/create-or-update-comment@v4
         with:
-          script: |
-            const welcomeMessage = `🎉 **Thanks for opening this pull request!**
-
-            Your contribution is appreciated. Here are some helpful commands you can use:
-
-            ## Available Poe Tasks
-            You can run any of these tasks using the slash command: \`/poe <task-name>\`
-
-            ### Core Tasks
-            - \`/poe test\` - Run all tests
-            - \`/poe test-fast\` - Run tests with fast exit on first failure
-            - \`/poe lint\` - Check code style and quality  
-            - \`/poe format\` - Format code with ruff
-            - \`/poe deps\` - Check for unused and missing dependencies
-            - \`/poe check\` - Run format check, linting, dependency check, and tests
-
-            ### Quick Fixes
-            - \`/poe fix\` - Auto-format and fix linting issues
-            - \`/poe clean\` - Clean up build artifacts and cache
-
-            ### Build & Install
-            - \`/poe build\` - Build the package
-            - \`/poe install\` - Install with development dependencies
-
-            ### Other Commands
-            - \`/poe version\` - Show package version
-            - \`/poe pre-commit\` - Run pre-commit style checks
-
-            The CI will automatically run tests when you push commits. Happy coding! 🚀`;
-
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: welcomeMessage
-            });
+          issue-number: ${{ github.event.pull_request.number }}
+          body: ${{ steps.welcome-message.outputs.message }}

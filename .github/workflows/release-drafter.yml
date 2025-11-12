@@ -10,6 +10,8 @@ on:
 
 jobs:
   update_release_draft:
+    # Only run on main branch to avoid failures before config is merged
+    if: github.ref == 'refs/heads/main'
     permissions:
       contents: write
       pull-requests: write

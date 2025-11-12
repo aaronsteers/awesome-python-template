@@ -8,8 +8,49 @@ permissions:
   contents: read
   issues: write
   pull-requests: write
+  actions: write
 
 jobs:
+  dispatch-slash-commands:
+    runs-on: ubuntu-latest
+    if: github.event.issue.pull_request
+    steps:
+      - name: Dispatch /fix command
+        if: startsWith(github.event.comment.body, '/fix')
+        uses: peter-evans/slash-command-dispatch@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commands: |
+            fix
+          dispatch-type: workflow
+          static-args: |
+            pr=${{ github.event.issue.number }}
+            comment-id=${{ github.event.comment.id }}
+
+      - name: Dispatch /lock command
+        if: startsWith(github.event.comment.body, '/lock')
+        uses: peter-evans/slash-command-dispatch@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commands: |
+            lock
+          dispatch-type: workflow
+          static-args: |
+            pr=${{ github.event.issue.number }}
+            comment-id=${{ github.event.comment.id }}
+
+      - name: Dispatch /test command
+        if: startsWith(github.event.comment.body, '/test')
+        uses: peter-evans/slash-command-dispatch@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commands: |
+            test
+          dispatch-type: workflow
+          static-args: |
+            pr=${{ github.event.issue.number }}
+            comment-id=${{ github.event.comment.id }}
+
   validate-and-run:
     runs-on: ubuntu-latest
     if: >

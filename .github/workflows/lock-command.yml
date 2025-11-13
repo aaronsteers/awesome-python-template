@@ -3,11 +3,11 @@ name: On-Demand Lock
 on:
   workflow_dispatch:
     inputs:
-      comment-id:
-        description: "Optional comment-id of the slash command. Ignore if not applicable."
-        required: false
       pr:
         description: "PR Number"
+        required: false
+      comment-id:
+        description: "Optional comment-id of the slash command. Ignore if not applicable."
         required: false
 
 permissions:

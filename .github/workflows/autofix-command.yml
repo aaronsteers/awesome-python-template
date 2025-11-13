@@ -5,9 +5,11 @@ on:
     inputs:
       pr:
         description: "PR Number"
+        type: string
         required: false
       comment-id:
-        description: "Optional comment-id of the slash command. Ignore if not applicable."
+        description: "Comment ID (Optional)"
+        type: string
         required: false
 
 permissions:

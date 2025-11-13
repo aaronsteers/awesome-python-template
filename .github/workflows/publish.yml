@@ -106,7 +106,7 @@ jobs:
           VERSION: ${{ env.VERSION || '0.0.0dev0'}}
         run: uv build
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: Packages-${{ github.run_id }}
           path: |

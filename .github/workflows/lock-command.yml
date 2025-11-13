@@ -32,4 +32,4 @@ jobs:
           pr: ${{ github.event.inputs.pr }}
           comment-id: ${{ github.event.inputs.comment-id }}
           github-token: ${{ steps.get-app-token.outputs.token || secrets.GITHUB_TOKEN }}
-          poe-command: lock
+          command: lock

@@ -2,9 +2,10 @@ name: PR Welcome
 
 on:
   pull_request:
-    types: [opened]
+    types: [opened, reopened]
 
 permissions:
+  contents: read
   issues: write
   pull-requests: write
 

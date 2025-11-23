@@ -169,13 +169,7 @@ This template follows modern Python best practices:
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for detailed information on:
-
-- Setting up your development environment
-- Running tests and quality checks
-- Using GitHub slash commands
-- Project structure and best practices
-- Making your first contribution
+Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for setup and development guidelines.
 
 ## 📄 License
 

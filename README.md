@@ -167,6 +167,16 @@ This template follows modern Python best practices:
 4. Push your changes
 5. Use `/poe <task>` commands in PR comments as needed
 
+## 🤝 Contributing
+
+Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for detailed information on:
+
+- Setting up your development environment
+- Running tests and quality checks
+- Using GitHub slash commands
+- Project structure and best practices
+- Making your first contribution
+
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

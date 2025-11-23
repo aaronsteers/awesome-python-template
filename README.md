@@ -167,6 +167,10 @@ This template follows modern Python best practices:
 4. Push your changes
 5. Use `/poe <task>` commands in PR comments as needed
 
+## 🤝 Contributing
+
+Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for setup and development guidelines.
+
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

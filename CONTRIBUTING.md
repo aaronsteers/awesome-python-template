@@ -8,9 +8,7 @@ Thank you for your interest in contributing!
 # Install uv if needed
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Clone and setup
-git clone https://github.com/aaronsteers/awesome-python-template.git
-cd awesome-python-template
+# Setup
 uv sync --all-extras
 
 # Install poe globally (optional)
@@ -62,7 +60,3 @@ awesome-python-template/
 ├── ruff.toml                      # Ruff config
 └── pytest.ini                     # Pytest config
 ```
-
-## License
-
-By contributing, you agree that your contributions will be licensed under the MIT License.

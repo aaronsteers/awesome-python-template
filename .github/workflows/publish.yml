@@ -146,15 +146,9 @@ jobs:
           name: Packages-${{ github.run_id }}
           path: dist
 
-      - name: Upload wheel to release
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: dist/*.whl
-          tag: ${{ github.ref }}
-          overwrite: true
-          file_glob: true
+      # Note: Wheel upload to GitHub release is handled by release-drafter.yml
+      # during the draft stage (before publish). This avoids the "immutable release"
+      # error that occurs when trying to upload assets after a release is published.
 
       - name: Publish to PyPI
         # Uses GitHub OIDC for passwordless authentication (see header comment)

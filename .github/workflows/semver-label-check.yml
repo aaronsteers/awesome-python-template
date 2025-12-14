@@ -1,4 +1,4 @@
-# PR Validation Workflow
+# Semantic PR Title Validation
 #
 # This workflow validates PRs for:
 # 1. Semantic PR title format (e.g., "feat:", "fix:", "chore:", etc.)
@@ -16,7 +16,7 @@
 # - "patch" label OR "bug"/"fix"/"bugfix" -> patch version bump (bug fixes)
 # - No label -> defaults to patch (but this check encourages explicit labeling)
 
-name: PR Validation
+name: Semantic PR Title Validation
 
 on:
   pull_request:

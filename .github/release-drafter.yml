@@ -47,9 +47,11 @@ version-resolver:
       - "security"
   default: patch
 template: |
-  ## Changes
-
   $CHANGES
+
+  ## Contributors
+
+  $CONTRIBUTORS
 autolabeler:
   - label: "chore"
     title:

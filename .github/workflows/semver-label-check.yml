@@ -1,13 +1,14 @@
-# Semver Label Check Workflow
+# PR Validation Workflow
 #
-# This workflow ensures that PRs have appropriate semver labels (major, minor, or patch)
-# for correct version resolution by Release Drafter.
+# This workflow validates PRs for:
+# 1. Semantic PR title format (e.g., "feat:", "fix:", "chore:", etc.)
+# 2. Semver labels for correct version resolution by Release Drafter
 #
 # How it works:
-# 1. Release Drafter's autolabeler automatically applies labels based on PR title patterns
-#    (e.g., "feat:" -> enhancement -> minor, "fix:" -> bug -> patch)
-# 2. This workflow checks that at least one semver label is present
-# 3. If no semver label is found, the check fails with guidance on how to fix it
+# - Semantic PR title check ensures PR titles follow conventional commit format
+# - Release Drafter's autolabeler automatically applies labels based on PR title patterns
+#   (e.g., "feat:" -> enhancement -> minor, "fix:" -> bug -> patch)
+# - Semver label check verifies at least one semver-related label is present
 #
 # Label to version mapping (configured in .github/release-drafter.yml):
 # - "major" label -> major version bump (breaking changes)
@@ -15,13 +16,61 @@
 # - "patch" label OR "bug"/"fix"/"bugfix" -> patch version bump (bug fixes)
 # - No label -> defaults to patch (but this check encourages explicit labeling)
 
-name: Semver Label Check
+name: PR Validation
 
 on:
   pull_request:
-    types: [opened, labeled, unlabeled, synchronize]
+    types: [opened, edited, labeled, unlabeled, synchronize, ready_for_review]
+
+permissions:
+  pull-requests: read
 
 jobs:
+  validate-pr-title:
+    name: Validate PR Title
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check semantic PR title
+        uses: amannn/action-semantic-pull-request@v5
+        if: ${{ github.event.pull_request.draft == false }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # Configure which types are allowed (newline-delimited).
+          # These are intentionally case-insensitive, allowing title casing or all lowercase.
+          # See: https://github.com/commitizen/conventional-commit-types/blob/master/index.json
+          types: |
+            fix
+            Fix
+            feat
+            Feat
+            docs
+            Docs
+            ci
+            CI
+            chore
+            Chore
+            build
+            Build
+            test
+            Test
+            refactor
+            Refactor
+            perf
+            Perf
+            style
+            Style
+
+      - name: Check for "do not merge" in PR title
+        if: ${{ github.event.pull_request.draft == false }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = context.payload.pull_request.title.toLowerCase();
+            if (title.includes('do not merge') || title.includes('do-not-merge')) {
+              core.setFailed('PR title contains "do not merge" or "do-not-merge". Please remove this before merging.');
+            }
+
   check-semver-label:
     name: Check for Semver Label
     runs-on: ubuntu-latest

@@ -7,7 +7,7 @@
 #
 # Authentication: This workflow uses GitHub OIDC for passwordless PyPI publishing.
 # To set this up for your repository:
-# 1. Go to PyPI.org -> Your Account -> Publishing
+# 1. Go to PyPI.org (or test.pypi.org for TestPyPI) -> Your Account -> Publishing
 # 2. Add a new "pending publisher" with:
 #    - PyPI Project Name: your-package-name
 #    - Owner: your-github-username-or-org
@@ -17,6 +17,12 @@
 # 3. Create a GitHub Environment named "PyPI" in your repo settings (optional but recommended)
 #
 # For more info: https://docs.pypi.org/trusted-publishers/
+#
+# TODO: This template currently publishes to TestPyPI for safe testing.
+# When ready to publish to real PyPI, update the following in the publish_to_pypi job:
+# 1. Change environment.url from test.pypi.org to pypi.org
+# 2. Remove repository-url from the pypa/gh-action-pypi-publish step
+# 3. Update your Trusted Publisher config on pypi.org (not test.pypi.org)
 
 name: Publish Package
 
@@ -144,7 +150,8 @@ jobs:
       contents: write
     environment:
       name: PyPI
-      url: https://pypi.org/p/awesome-python-template/
+      # TODO: Change to https://pypi.org/p/awesome-python-template/ when ready for production
+      url: https://test.pypi.org/project/awesome-python-template/
     if: >
       (github.event_name == 'release' &&
        github.event.action == 'published') ||
@@ -173,6 +180,7 @@ jobs:
 
       - name: Publish to PyPI
         # Uses GitHub OIDC for passwordless authentication (see header comment for setup)
+        # TODO: Remove repository-url when ready to publish to real PyPI
         if: >
           (github.event_name == 'release' &&
            github.event.action == 'published') ||
@@ -180,3 +188,5 @@ jobs:
            startsWith(github.ref, 'refs/tags/v')) ||
           github.event.inputs.publish_to_pypi == 'true'
         uses: pypa/gh-action-pypi-publish@v1.13.0
+        with:
+          repository-url: https://test.pypi.org/legacy/

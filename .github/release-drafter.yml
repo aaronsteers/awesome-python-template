@@ -49,8 +49,6 @@ version-resolver:
 template: |
   $CHANGES
 
-  ## Contributors
-
   $CONTRIBUTORS
 autolabeler:
   - label: "chore"

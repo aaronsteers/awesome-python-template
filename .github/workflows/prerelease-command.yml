@@ -5,14 +5,8 @@
 #
 # Usage: Comment `/prerelease` on a PR to trigger this workflow.
 #
-# Fork Support: This workflow supports PRs from forks by using refs/pull/<PR>/head
-# which GitHub creates for all PRs regardless of fork status.
-#
-# Security: The slash-command-dispatch.yml restricts /prerelease to users with
-# write permission, preventing untrusted users from publishing prereleases.
-#
-# Requirements:
-# - GitHub App with workflow dispatch permissions (OCTAVIA_BOT_APP_ID and OCTAVIA_BOT_PRIVATE_KEY secrets)
+# Note:
+# - GitHub App with workflow dispatch permissions (GITHUB_APP_APP_ID and GITHUB_APP_PRIVATE_KEY secrets)
 # - PyPI Trusted Publisher configured for this workflow (see publish.yml header for setup)
 
 name: On-Demand Prerelease
@@ -40,40 +34,24 @@ jobs:
     name: Trigger Prerelease Publish
     runs-on: ubuntu-latest
     steps:
+      - name: Check that PR number is provided
+        if: github.event.inputs.pr == ''
+        run: |
+          echo "Error: /prerelease command must be invoked on a pull request."
+          exit 1
+
       - name: Authenticate as GitHub App
         uses: actions/create-github-app-token@v2
         id: get-app-token
         with:
           owner: ${{ github.repository_owner }}
           repositories: ${{ github.event.repository.name }}
-          app-id: ${{ secrets.OCTAVIA_BOT_APP_ID }}
-          private-key: ${{ secrets.OCTAVIA_BOT_PRIVATE_KEY }}
+          app-id: ${{ secrets.GITHUB_APP_APP_ID }}
+          private-key: ${{ secrets.GITHUB_APP_PRIVATE_KEY }}
 
       - name: Create URL to the run output
         id: vars
         run: echo "run-url=https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" >> $GITHUB_OUTPUT
-
-      - name: Check that PR number is provided
-        if: github.event.inputs.pr == ''
-        run: |
-          echo "Error: /prerelease command must be invoked on a pull request, not an issue."
-          exit 1
-
-      - name: Get PR info
-        id: pr-info
-        run: |
-          PR_JSON=$(gh api repos/${{ github.repository }}/pulls/${{ github.event.inputs.pr }})
-          HEAD_REF=$(echo "$PR_JSON" | jq -r .head.ref)
-          HEAD_REPO=$(echo "$PR_JSON" | jq -r .head.repo.full_name)
-          HEAD_SHA=$(echo "$PR_JSON" | jq -r .head.sha)
-          echo "head-ref=${HEAD_REF}" >> $GITHUB_OUTPUT
-          echo "head-repo=${HEAD_REPO}" >> $GITHUB_OUTPUT
-          echo "head-sha=${HEAD_SHA}" >> $GITHUB_OUTPUT
-          echo "PR branch: ${HEAD_REF} from ${HEAD_REPO} (SHA: ${HEAD_SHA})"
-          # Note: We use refs/pull/<PR>/head for fork compatibility
-          # This ref is created by GitHub for all PRs and works regardless of fork status
-        env:
-          GH_TOKEN: ${{ steps.get-app-token.outputs.token }}
 
       - name: Append comment with job run link
         if: github.event.inputs.comment-id
@@ -114,9 +92,7 @@ jobs:
           comment-id: ${{ steps.first-comment-action.outputs.comment-id }}
           reactions: hooray
           body: |
-            > Prerelease workflow triggered successfully.
-            >
-            > View the publish workflow run: ${{ steps.trigger-publish.outputs.workflow-url }}
+            > ✅ [Prerelease publish job](${{ steps.trigger-publish.outputs.workflow-url }}) completed successfully.
 
       - name: Append failure comment
         if: failure() && github.event.inputs.comment-id
@@ -125,4 +101,4 @@ jobs:
           comment-id: ${{ steps.first-comment-action.outputs.comment-id }}
           reactions: confused
           body: |
-            > Failed to trigger prerelease workflow.
+            > ❌ [Prerelease publish job](${{ steps.trigger-publish.outputs.workflow-url }}) failed.

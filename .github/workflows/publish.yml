@@ -1,34 +1,16 @@
 # This workflow builds the python package.
 #
-# When run from a release publish event or a workflow dispatch, it also publishes to PyPI.
-#
-# Note: We may want to rename this file at some point. However, if we rename the workflow file name,
-# we have to also update the Trusted Publisher settings on PyPI.
-#
-# Authentication: This workflow uses GitHub OIDC for passwordless PyPI publishing.
-# To set this up for your repository:
-# 1. Go to PyPI.org (or test.pypi.org for TestPyPI) -> Your Account -> Publishing
-# 2. Add a new "pending publisher" with:
-#    - PyPI Project Name: your-package-name
-#    - Owner: your-github-username-or-org
-#    - Repository name: your-repo-name
-#    - Workflow name: publish.yml
-#    - Environment name: PyPI (optional but recommended)
-# 3. Create a GitHub Environment named "PyPI" in your repo settings (optional but recommended)
-#
+# Authentication: This workflow expects GitHub OIDC for passwordless PyPI publishing.
 # For more info: https://docs.pypi.org/trusted-publishers/
 #
-# TODO: This template currently publishes to TestPyPI for safe testing.
+# TODO: This template repo publishes to TestPyPI.
 # When ready to publish to real PyPI, update the following in the publish_to_pypi job:
 # 1. Change environment.url from test.pypi.org to pypi.org
 # 2. Remove repository-url from the pypa/gh-action-pypi-publish step
-# 3. Update your Trusted Publisher config on pypi.org (not test.pypi.org)
 
 name: Publish Package
 
 on:
-  release:
-    types: [published]
   push:
     tags:
       - "v*"
@@ -125,8 +107,6 @@ jobs:
         env:
           # Use UV_DYNAMIC_VERSIONING_BYPASS to override the version in pyproject.toml
           # This ensures the build matches the detected/validated VERSION.
-          # For this to work, configure uv-dynamic-versioning in pyproject.toml.
-          # If not using dynamic versioning, this env var is ignored.
           UV_DYNAMIC_VERSIONING_BYPASS: ${{ env.VERSION }}
         run: uv build
 
@@ -150,11 +130,9 @@ jobs:
       contents: write
     environment:
       name: PyPI
-      # TODO: Change to https://pypi.org/p/awesome-python-template/ when ready for production
+      # TODO: Change to https://pypi.org/p/{my-package-name/ when ready for production
       url: https://test.pypi.org/project/awesome-python-template/
     if: >
-      (github.event_name == 'release' &&
-       github.event.action == 'published') ||
       (github.event_name == 'push' &&
        startsWith(github.ref, 'refs/tags/v')) ||
       (github.event_name == 'workflow_dispatch' &&
@@ -169,7 +147,7 @@ jobs:
           path: dist
 
       - name: Upload wheel to release
-        if: github.event_name == 'release' || startsWith(github.ref, 'refs/tags/v')
+        if: startsWith(github.ref, 'refs/tags/v')
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
@@ -179,14 +157,8 @@ jobs:
           file_glob: true
 
       - name: Publish to PyPI
-        # Uses GitHub OIDC for passwordless authentication (see header comment for setup)
-        # TODO: Remove repository-url when ready to publish to real PyPI
-        if: >
-          (github.event_name == 'release' &&
-           github.event.action == 'published') ||
-          (github.event_name == 'push' &&
-           startsWith(github.ref, 'refs/tags/v')) ||
-          github.event.inputs.publish_to_pypi == 'true'
+        # Uses GitHub OIDC for passwordless authentication (see header comment)
         uses: pypa/gh-action-pypi-publish@v1.13.0
         with:
+          # TODO: Remove repository-url when ready to publish to real PyPI
           repository-url: https://test.pypi.org/legacy/

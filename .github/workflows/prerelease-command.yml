@@ -1,21 +1,17 @@
 # Prerelease Command Workflow
 #
 # This workflow is triggered by the /prerelease slash command on a PR.
-# It builds and publishes a prerelease version of the package to PyPI.
+# It builds and publishes a prerelease version of the package to TestPyPI.
 #
 # Usage: Comment `/prerelease` on a PR to trigger this workflow.
 #
-# Note:
-# - GitHub App with workflow dispatch permissions (GITHUB_APP_APP_ID and GITHUB_APP_PRIVATE_KEY secrets)
+# Requirements:
 # - PyPI Trusted Publisher configured for this workflow (see publish.yml header for setup)
+#
+# TODO: When ready to publish to real PyPI, update the install command in the success comment
+# to remove the --index-url flag, and update the pypa/gh-action-pypi-publish step.
 
 name: On-Demand Prerelease
-
-# Minimal permissions for security
-permissions:
-  contents: read
-  pull-requests: write
-  issues: write
 
 on:
   workflow_dispatch:
@@ -23,82 +19,138 @@ on:
       pr:
         description: "PR Number"
         type: string
-        required: false
+        required: true
       comment-id:
         description: "Comment ID (Optional)"
         type: string
         required: false
 
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
 jobs:
-  prerelease-on-demand:
-    name: Trigger Prerelease Publish
+  resolve-pr:
+    name: Set up Workflow
     runs-on: ubuntu-latest
     steps:
-      - name: Check that PR number is provided
-        if: github.event.inputs.pr == ''
-        run: |
-          echo "Error: /prerelease command must be invoked on a pull request."
-          exit 1
-
-      - name: Authenticate as GitHub App
-        uses: actions/create-github-app-token@v2
-        id: get-app-token
-        with:
-          owner: ${{ github.repository_owner }}
-          repositories: ${{ github.event.repository.name }}
-          app-id: ${{ secrets.GITHUB_APP_APP_ID }}
-          private-key: ${{ secrets.GITHUB_APP_PRIVATE_KEY }}
-
       - name: Create URL to the run output
         id: vars
         run: echo "run-url=https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" >> $GITHUB_OUTPUT
 
       - name: Append comment with job run link
-        if: github.event.inputs.comment-id
         id: first-comment-action
+        if: github.event.inputs.comment-id
         uses: peter-evans/create-or-update-comment@v4
         with:
           comment-id: ${{ github.event.inputs.comment-id }}
           issue-number: ${{ github.event.inputs.pr }}
           body: |
-            > **Prerelease Job Info**
+            > **Prerelease Build Started**
             >
-            > This job triggers the publish workflow with default arguments to create a prerelease.
-            >
-            > Prerelease job started... [Check job output.][1]
+            > Building and publishing prerelease package from this PR...
+            > [Check job output.](${{ steps.vars.outputs.run-url }})
 
-            [1]: ${{ steps.vars.outputs.run-url }}
-
-      - name: Trigger publish workflow
-        id: trigger-publish
-        uses: the-actions-org/workflow-dispatch@v4
+      - name: Checkout to get latest tag
+        uses: actions/checkout@v4
         with:
-          workflow: publish.yml
-          token: ${{ steps.get-app-token.outputs.token }}
+          fetch-depth: 0
+
+      - name: Compute prerelease version
+        id: version
+        run: |
+          # Get the latest tag version (strip 'v' prefix if present)
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          BASE_VERSION=${LATEST_TAG#v}
+          # Create a unique prerelease version using PR number and run ID
+          # Format: {base}.dev{pr_number}{run_id} (e.g., 0.2.0.dev26123456789)
+          PRERELEASE_VERSION="${BASE_VERSION}.dev${{ github.event.inputs.pr }}${{ github.run_id }}"
+          echo "version=$PRERELEASE_VERSION" >> $GITHUB_OUTPUT
+          echo "Computed prerelease version: $PRERELEASE_VERSION"
+
+    outputs:
+      job-run-url: ${{ steps.vars.outputs.run-url }}
+      first-comment-id: ${{ steps.first-comment-action.outputs.comment-id }}
+      prerelease-version: ${{ steps.version.outputs.version }}
+
+  build-and-publish:
+    name: Build and Publish
+    needs: [resolve-pr]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    environment:
+      name: PyPI
+    steps:
+      - name: Checkout PR code
+        uses: actions/checkout@v4
+        with:
           # Use refs/pull/<PR>/head for fork compatibility
-          # This ref is created by GitHub for all PRs regardless of fork status
           ref: refs/pull/${{ github.event.inputs.pr }}/head
-          wait-for-completion: true
-          display-workflow-run-url: false
-          inputs: >-
-            {
-              "publish_to_pypi": "true"
-            }
+          fetch-depth: 0
 
-      - name: Append success comment
-        if: github.event.inputs.comment-id
+      - name: Install uv
+        uses: astral-sh/setup-uv@v2
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build package
+        env:
+          UV_DYNAMIC_VERSIONING_BYPASS: ${{ needs.resolve-pr.outputs.prerelease-version }}
+        run: |
+          uv build
+          echo "Built packages:"
+          ls -la dist/
+
+      - name: Publish to TestPyPI
+        uses: pypa/gh-action-pypi-publish@v1.13.0
+        with:
+          # TODO: Delete this override to enable "real" publish:
+          repository-url: https://test.pypi.org/legacy/
+
+    outputs:
+      version: ${{ needs.resolve-pr.outputs.prerelease-version }}
+
+  post-result-comment:
+    name: Write Status to PR
+    needs: [resolve-pr, build-and-publish]
+    if: always() && github.event.inputs.comment-id
+    runs-on: ubuntu-latest
+    steps:
+      - name: Post success comment
+        if: needs.build-and-publish.result == 'success'
         uses: peter-evans/create-or-update-comment@v4
         with:
-          comment-id: ${{ steps.first-comment-action.outputs.comment-id }}
-          reactions: hooray
+          comment-id: ${{ needs.resolve-pr.outputs.first-comment-id }}
+          issue-number: ${{ github.event.inputs.pr }}
+          reactions: rocket
           body: |
-            > ✅ [Prerelease publish job](${{ steps.trigger-publish.outputs.workflow-url }}) completed successfully.
+            > **Prerelease Published to TestPyPI**
+            >
+            > Version: `${{ needs.resolve-pr.outputs.prerelease-version }}`
+            > [View publish workflow](${{ needs.resolve-pr.outputs.job-run-url }})
+            >
+            > Install with:
+            > ```bash
+            > pip install awesome-python-template==${{ needs.resolve-pr.outputs.prerelease-version }} --index-url https://test.pypi.org/simple/
+            > ```
 
-      - name: Append failure comment
-        if: failure() && github.event.inputs.comment-id
+      - name: Post failure comment
+        if: needs.build-and-publish.result == 'failure'
         uses: peter-evans/create-or-update-comment@v4
         with:
-          comment-id: ${{ steps.first-comment-action.outputs.comment-id }}
+          comment-id: ${{ needs.resolve-pr.outputs.first-comment-id }}
+          issue-number: ${{ github.event.inputs.pr }}
           reactions: confused
           body: |
-            > ❌ [Prerelease publish job](${{ steps.trigger-publish.outputs.workflow-url }}) failed.
+            > **Prerelease Build/Publish Failed**
+            >
+            > The prerelease encountered an error.
+            > [Check job output](${{ needs.resolve-pr.outputs.job-run-url }}) for details.

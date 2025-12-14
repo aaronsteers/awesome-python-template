@@ -1,12 +1,28 @@
 # This workflow builds the python package.
 #
-# When run from a release tag or a workflow dispatch, it also publishes to PyPI.
+# When run from a release publish event or a workflow dispatch, it also publishes to PyPI.
+#
 # Note: We may want to rename this file at some point. However, if we rename the workflow file name,
 # we have to also update the Trusted Publisher settings on PyPI.
+#
+# Authentication: This workflow uses GitHub OIDC for passwordless PyPI publishing.
+# To set this up for your repository:
+# 1. Go to PyPI.org -> Your Account -> Publishing
+# 2. Add a new "pending publisher" with:
+#    - PyPI Project Name: your-package-name
+#    - Owner: your-github-username-or-org
+#    - Repository name: your-repo-name
+#    - Workflow name: publish.yml
+#    - Environment name: PyPI (optional but recommended)
+# 3. Create a GitHub Environment named "PyPI" in your repo settings (optional but recommended)
+#
+# For more info: https://docs.pypi.org/trusted-publishers/
 
 name: Publish Package
 
 on:
+  release:
+    types: [published]
   push:
     tags:
       - "v*"
@@ -101,9 +117,11 @@ jobs:
 
       - name: Build package
         env:
-          # For now, use the static version from pyproject.toml
-          # TODO: Add dynamic versioning support
-          VERSION: ${{ env.VERSION || '0.0.0dev0'}}
+          # Use UV_DYNAMIC_VERSIONING_BYPASS to override the version in pyproject.toml
+          # This ensures the build matches the detected/validated VERSION.
+          # For this to work, configure uv-dynamic-versioning in pyproject.toml.
+          # If not using dynamic versioning, this env var is ignored.
+          UV_DYNAMIC_VERSIONING_BYPASS: ${{ env.VERSION }}
         run: uv build
 
       - uses: actions/upload-artifact@v5
@@ -128,6 +146,8 @@ jobs:
       name: PyPI
       url: https://pypi.org/p/awesome-python-template/
     if: >
+      (github.event_name == 'release' &&
+       github.event.action == 'published') ||
       (github.event_name == 'push' &&
        startsWith(github.ref, 'refs/tags/v')) ||
       (github.event_name == 'workflow_dispatch' &&
@@ -142,7 +162,7 @@ jobs:
           path: dist
 
       - name: Upload wheel to release
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: github.event_name == 'release' || startsWith(github.ref, 'refs/tags/v')
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
@@ -152,8 +172,11 @@ jobs:
           file_glob: true
 
       - name: Publish to PyPI
+        # Uses GitHub OIDC for passwordless authentication (see header comment for setup)
         if: >
+          (github.event_name == 'release' &&
+           github.event.action == 'published') ||
           (github.event_name == 'push' &&
-           startsWith(github.ref, 'refs/tags/v')
-          ) || github.event.inputs.publish_to_pypi == 'true'
+           startsWith(github.ref, 'refs/tags/v')) ||
+          github.event.inputs.publish_to_pypi == 'true'
         uses: pypa/gh-action-pypi-publish@v1.13.0

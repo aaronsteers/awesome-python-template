@@ -4,6 +4,7 @@ A modern Python project template with best practices and cutting-edge tooling.
 
 ## 🚀 Features
 
+- **🔄 Automated releases** with Release Drafter and semantic versioning
 - **📦 uv** for fast, reliable package management
 - **🏗️ Source layout** with `src/{library-name}` structure
 - **🧪 pytest** for comprehensive testing

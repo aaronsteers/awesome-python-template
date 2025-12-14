@@ -72,6 +72,7 @@ jobs:
           release_id: ${{ needs.update_release_draft.outputs.release_id }}
           overwrite: true
           file_glob: true
+          draft: true
 
       - name: Upload sdist to draft release
         uses: svenstaro/upload-release-action@v2
@@ -81,3 +82,4 @@ jobs:
           release_id: ${{ needs.update_release_draft.outputs.release_id }}
           overwrite: true
           file_glob: true
+          draft: true

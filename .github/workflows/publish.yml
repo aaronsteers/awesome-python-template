@@ -1,4 +1,8 @@
-# This workflow builds the python package.
+# This workflow builds the python package and publishes to PyPI.
+#
+# Triggers:
+# - release: published - When user clicks "Publish" on a draft release (downloads pre-built assets)
+# - workflow_dispatch - Manual trigger for prereleases (builds fresh)
 #
 # Authentication: This workflow expects GitHub OIDC for passwordless PyPI publishing.
 # For more info: https://docs.pypi.org/trusted-publishers/
@@ -11,9 +15,8 @@
 name: Publish Package
 
 on:
-  push:
-    tags:
-      - "v*"
+  release:
+    types: [published]
   workflow_dispatch:
     inputs:
       version:
@@ -30,9 +33,52 @@ on:
         default: true
 
 jobs:
+  # Download pre-built assets from the release (only on release: published)
+  download_release_assets:
+    name: Download Release Assets
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release'
+    steps:
+      - name: Download wheel and sdist from release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p dist
+          gh release download "${{ github.event.release.tag_name }}" \
+            --repo "${{ github.repository }}" \
+            --pattern "*.whl" \
+            --pattern "*.tar.gz" \
+            --dir dist
+          echo "Downloaded assets:"
+          ls -la dist/
+
+      - name: Verify assets were downloaded
+        run: |
+          if [ ! -f dist/*.whl ]; then
+            echo "Error: No wheel file found in release assets"
+            exit 1
+          fi
+          if [ ! -f dist/*.tar.gz ]; then
+            echo "Error: No sdist file found in release assets"
+            exit 1
+          fi
+          echo "Assets verified successfully"
+
+      - uses: actions/upload-artifact@v5
+        with:
+          name: Packages-${{ github.run_id }}
+          path: |
+            dist/*.whl
+            dist/*.tar.gz
+
+    outputs:
+      VERSION: ${{ github.event.release.tag_name }}
+
+  # Build fresh package (only on workflow_dispatch, NOT on release)
   build:
     name: Build Python Package
     runs-on: ubuntu-latest
+    if: github.event_name != 'release'
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v4
@@ -124,7 +170,16 @@ jobs:
   publish_to_pypi:
     name: Publish Package to PyPI
     runs-on: ubuntu-latest
-    needs: [build]
+    # Depend on whichever job ran (build for dispatch, download for release)
+    needs: [build, download_release_assets]
+    # Always run if at least one of the needed jobs succeeded
+    if: |
+      always() &&
+      (needs.build.result == 'success' || needs.download_release_assets.result == 'success') &&
+      (
+        github.event_name == 'release' ||
+        (github.event_name == 'workflow_dispatch' && github.event.inputs.publish_to_pypi == 'true')
+      )
     permissions:
       id-token: write
       contents: write
@@ -132,29 +187,18 @@ jobs:
       name: PyPI
       # TODO: Update and uncomment:
       # url: https://pypi.org/p/{my-package-name}/
-    if: >
-      (github.event_name == 'push' &&
-       startsWith(github.ref, 'refs/tags/v')) ||
-      (github.event_name == 'workflow_dispatch' &&
-       github.event.inputs.publish_to_pypi == 'true')
     env:
-      VERSION: ${{ needs.build.outputs.VERSION }}
-      IS_PRERELEASE: ${{ needs.build.outputs.IS_PRERELEASE }}
+      VERSION: ${{ needs.build.outputs.VERSION || needs.download_release_assets.outputs.VERSION }}
+      IS_PRERELEASE: ${{ needs.build.outputs.IS_PRERELEASE || 'false' }}
     steps:
       - uses: actions/download-artifact@v6
         with:
           name: Packages-${{ github.run_id }}
           path: dist
 
-      - name: Upload wheel to release
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: dist/*.whl
-          tag: ${{ github.ref }}
-          overwrite: true
-          file_glob: true
+      # Note: Wheel upload to GitHub release is handled by release-drafter.yml
+      # during the draft stage (before publish). This avoids the "immutable release"
+      # error that occurs when trying to upload assets after a release is published.
 
       - name: Publish to PyPI
         # Uses GitHub OIDC for passwordless authentication (see header comment)

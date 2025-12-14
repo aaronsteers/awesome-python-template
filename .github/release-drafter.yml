@@ -21,18 +21,20 @@ categories:
 change-template: "- $TITLE (#$NUMBER)"
 change-title-escapes: '\<*_&' # You can add # and @ to disable mentions, and add ` to disable code blocks.
 version-resolver:
-  major:
-    labels:
-      - "major"
-      - "breaking"
   minor:
     labels:
-      - "minor"
       - "enhancement"
       - "feature"
+      - "breaking"
+  # Semver rules are different before "1.0" If your project is v0.x, you
+  # don't want to auto-bump to 1.0.
+  # Uncomment and dedent if when/if you want to auto-select a major version
+  # bump.
+  # major:
+  #   labels:
+  #     - "breaking"
   patch:
     labels:
-      - "patch"
       - "bug"
       - "bugfix"
       - "fix"
@@ -77,4 +79,5 @@ autolabeler:
       - '/^build\(deps\)\:/i'
   - label: "breaking"
     title:
-      - '/!:\s*$/i'
+      # Match conventional commit breaking change syntax: feat!: or fix!: etc.
+      - '/^[a-z]+(\([^)]+\))?!:/i'

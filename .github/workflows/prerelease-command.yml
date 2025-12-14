@@ -5,6 +5,12 @@
 #
 # Usage: Comment `/prerelease` on a PR to trigger this workflow.
 #
+# Fork Support: This workflow supports PRs from forks by using refs/pull/<PR>/head
+# which GitHub creates for all PRs regardless of fork status.
+#
+# Security: The slash-command-dispatch.yml restricts /prerelease to users with
+# write permission, preventing untrusted users from publishing prereleases.
+#
 # Requirements:
 # - GitHub App with workflow dispatch permissions (OCTAVIA_BOT_APP_ID and OCTAVIA_BOT_PRIVATE_KEY secrets)
 # - PyPI Trusted Publisher configured for this workflow (see publish.yml header for setup)
@@ -59,19 +65,15 @@ jobs:
           PR_JSON=$(gh api repos/${{ github.repository }}/pulls/${{ github.event.inputs.pr }})
           HEAD_REF=$(echo "$PR_JSON" | jq -r .head.ref)
           HEAD_REPO=$(echo "$PR_JSON" | jq -r .head.repo.full_name)
+          HEAD_SHA=$(echo "$PR_JSON" | jq -r .head.sha)
           echo "head-ref=${HEAD_REF}" >> $GITHUB_OUTPUT
           echo "head-repo=${HEAD_REPO}" >> $GITHUB_OUTPUT
-          echo "PR branch: ${HEAD_REF} from ${HEAD_REPO}"
+          echo "head-sha=${HEAD_SHA}" >> $GITHUB_OUTPUT
+          echo "PR branch: ${HEAD_REF} from ${HEAD_REPO} (SHA: ${HEAD_SHA})"
+          # Note: We use refs/pull/<PR>/head for fork compatibility
+          # This ref is created by GitHub for all PRs and works regardless of fork status
         env:
           GH_TOKEN: ${{ steps.get-app-token.outputs.token }}
-
-      - name: Check that PR is from this repository (not a fork)
-        if: steps.pr-info.outputs.head-repo != github.repository
-        run: |
-          echo "Error: /prerelease only works for branches in this repository, not forks."
-          echo "PR is from: ${{ steps.pr-info.outputs.head-repo }}"
-          echo "Expected: ${{ github.repository }}"
-          exit 1
 
       - name: Append comment with job run link
         if: github.event.inputs.comment-id
@@ -95,7 +97,9 @@ jobs:
         with:
           workflow: publish.yml
           token: ${{ steps.get-app-token.outputs.token }}
-          ref: ${{ steps.pr-info.outputs.head-ref }}
+          # Use refs/pull/<PR>/head for fork compatibility
+          # This ref is created by GitHub for all PRs regardless of fork status
+          ref: refs/pull/${{ github.event.inputs.pr }}/head
           wait-for-completion: true
           display-workflow-run-url: false
           inputs: >-

@@ -48,8 +48,6 @@ version-resolver:
   default: patch
 template: |
   $CHANGES
-
-  $CONTRIBUTORS
 autolabeler:
   - label: "chore"
     title:

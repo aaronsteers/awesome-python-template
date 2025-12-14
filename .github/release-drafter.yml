@@ -23,7 +23,6 @@ change-title-escapes: '\<*_&' # You can add # and @ to disable mentions, and add
 version-resolver:
   minor:
     labels:
-      - "minor"
       - "enhancement"
       - "feature"
       - "breaking"
@@ -33,11 +32,9 @@ version-resolver:
   # bump.
   # major:
   #   labels:
-  #     - "major"
   #     - "breaking"
   patch:
     labels:
-      - "patch"
       - "bug"
       - "bugfix"
       - "fix"

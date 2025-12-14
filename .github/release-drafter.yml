@@ -77,4 +77,5 @@ autolabeler:
       - '/^build\(deps\)\:/i'
   - label: "breaking"
     title:
-      - '/!:\s*$/i'
+      # Match conventional commit breaking change syntax: feat!: or fix!: etc.
+      - '/^[a-z]+(\([^)]+\))?!:/i'

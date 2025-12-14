@@ -1,8 +1,12 @@
 # This workflow builds the python package.
 #
-# When run from a release tag or a workflow dispatch, it also publishes to PyPI.
-# Note: We may want to rename this file at some point. However, if we rename the workflow file name,
-# we have to also update the Trusted Publisher settings on PyPI.
+# Authentication: This workflow expects GitHub OIDC for passwordless PyPI publishing.
+# For more info: https://docs.pypi.org/trusted-publishers/
+#
+# TODO: This template repo publishes to TestPyPI.
+# When ready to publish to real PyPI, update the following in the publish_to_pypi job:
+# 1. Change environment.url from test.pypi.org to pypi.org
+# 2. Remove repository-url from the pypa/gh-action-pypi-publish step
 
 name: Publish Package
 
@@ -101,9 +105,9 @@ jobs:
 
       - name: Build package
         env:
-          # For now, use the static version from pyproject.toml
-          # TODO: Add dynamic versioning support
-          VERSION: ${{ env.VERSION || '0.0.0dev0'}}
+          # Use UV_DYNAMIC_VERSIONING_BYPASS to override the version in pyproject.toml
+          # This ensures the build matches the detected/validated VERSION.
+          UV_DYNAMIC_VERSIONING_BYPASS: ${{ env.VERSION }}
         run: uv build
 
       - uses: actions/upload-artifact@v5
@@ -126,7 +130,8 @@ jobs:
       contents: write
     environment:
       name: PyPI
-      url: https://pypi.org/p/awesome-python-template/
+      # TODO: Update and uncomment:
+      # url: https://pypi.org/p/{my-package-name}/
     if: >
       (github.event_name == 'push' &&
        startsWith(github.ref, 'refs/tags/v')) ||
@@ -152,8 +157,8 @@ jobs:
           file_glob: true
 
       - name: Publish to PyPI
-        if: >
-          (github.event_name == 'push' &&
-           startsWith(github.ref, 'refs/tags/v')
-          ) || github.event.inputs.publish_to_pypi == 'true'
+        # Uses GitHub OIDC for passwordless authentication (see header comment)
         uses: pypa/gh-action-pypi-publish@v1.13.0
+        with:
+          # TODO: Delete this override to enable "real" publish:
+          repository-url: https://test.pypi.org/legacy/

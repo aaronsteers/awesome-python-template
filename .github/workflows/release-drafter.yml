@@ -10,8 +10,8 @@ on:
 
 jobs:
   update_release_draft:
-    # Only run on main branch to avoid failures before config is merged
-    if: github.ref == 'refs/heads/main'
+    # Run on PRs (for autolabeler) and on main branch (for release draft updates)
+    # The autolabeler needs to run on PRs to apply labels based on PR title patterns
     permissions:
       contents: write
       pull-requests: write

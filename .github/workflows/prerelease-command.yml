@@ -1,0 +1,104 @@
+# Prerelease Command Workflow
+#
+# This workflow is triggered by the /prerelease slash command on a PR.
+# It builds and publishes a prerelease version of the package to PyPI.
+#
+# Usage: Comment `/prerelease` on a PR to trigger this workflow.
+#
+# Note:
+# - GitHub App with workflow dispatch permissions (GITHUB_APP_APP_ID and GITHUB_APP_PRIVATE_KEY secrets)
+# - PyPI Trusted Publisher configured for this workflow (see publish.yml header for setup)
+
+name: On-Demand Prerelease
+
+# Minimal permissions for security
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: "PR Number"
+        type: string
+        required: false
+      comment-id:
+        description: "Comment ID (Optional)"
+        type: string
+        required: false
+
+jobs:
+  prerelease-on-demand:
+    name: Trigger Prerelease Publish
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check that PR number is provided
+        if: github.event.inputs.pr == ''
+        run: |
+          echo "Error: /prerelease command must be invoked on a pull request."
+          exit 1
+
+      - name: Authenticate as GitHub App
+        uses: actions/create-github-app-token@v2
+        id: get-app-token
+        with:
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+          app-id: ${{ secrets.GITHUB_APP_APP_ID }}
+          private-key: ${{ secrets.GITHUB_APP_PRIVATE_KEY }}
+
+      - name: Create URL to the run output
+        id: vars
+        run: echo "run-url=https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" >> $GITHUB_OUTPUT
+
+      - name: Append comment with job run link
+        if: github.event.inputs.comment-id
+        id: first-comment-action
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          comment-id: ${{ github.event.inputs.comment-id }}
+          issue-number: ${{ github.event.inputs.pr }}
+          body: |
+            > **Prerelease Job Info**
+            >
+            > This job triggers the publish workflow with default arguments to create a prerelease.
+            >
+            > Prerelease job started... [Check job output.][1]
+
+            [1]: ${{ steps.vars.outputs.run-url }}
+
+      - name: Trigger publish workflow
+        id: trigger-publish
+        uses: the-actions-org/workflow-dispatch@v4
+        with:
+          workflow: publish.yml
+          token: ${{ steps.get-app-token.outputs.token }}
+          # Use refs/pull/<PR>/head for fork compatibility
+          # This ref is created by GitHub for all PRs regardless of fork status
+          ref: refs/pull/${{ github.event.inputs.pr }}/head
+          wait-for-completion: true
+          display-workflow-run-url: false
+          inputs: >-
+            {
+              "publish_to_pypi": "true"
+            }
+
+      - name: Append success comment
+        if: github.event.inputs.comment-id
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          comment-id: ${{ steps.first-comment-action.outputs.comment-id }}
+          reactions: hooray
+          body: |
+            > ✅ [Prerelease publish job](${{ steps.trigger-publish.outputs.workflow-url }}) completed successfully.
+
+      - name: Append failure comment
+        if: failure() && github.event.inputs.comment-id
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          comment-id: ${{ steps.first-comment-action.outputs.comment-id }}
+          reactions: confused
+          body: |
+            > ❌ [Prerelease publish job](${{ steps.trigger-publish.outputs.workflow-url }}) failed.

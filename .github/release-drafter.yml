@@ -24,12 +24,25 @@ version-resolver:
   major:
     labels:
       - "major"
+      - "breaking"
   minor:
     labels:
       - "minor"
+      - "enhancement"
+      - "feature"
   patch:
     labels:
       - "patch"
+      - "bug"
+      - "bugfix"
+      - "fix"
+      - "chore"
+      - "ci"
+      - "docs"
+      - "refactor"
+      - "testing"
+      - "dependencies"
+      - "security"
   default: patch
 template: |
   ## Changes

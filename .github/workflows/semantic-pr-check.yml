@@ -26,6 +26,22 @@ jobs:
       contents: read
       pull-requests: write
     steps:
+      # Remove title-derived labels first to make autolabeler idempotent
+      # (e.g., if PR title changes from "fix:" to "ci:", remove old "bug" label)
+      - name: Remove title-derived labels
+        uses: actions-ecosystem/action-remove-labels@v1
+        with:
+          labels: |
+            bug
+            enhancement
+            chore
+            ci
+            docs
+            testing
+            security
+            dependencies
+            breaking
+
       # Note: When called on PR events, release-drafter only runs the autolabeler
       # (it doesn't create/update draft releases - that only happens on push to main)
       - uses: release-drafter/release-drafter@v6

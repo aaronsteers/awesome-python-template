@@ -4,14 +4,10 @@ on:
   push:
     branches:
       - main
-  pull_request:
-    # Unintuitive: 'release drafter' behaves as 'auto labeler' on PR events
-    types: [opened, reopened, synchronize, edited]
 
 jobs:
   update_release_draft:
-    # Run on PRs (for autolabeler) and on main branch (for release draft updates)
-    # The autolabeler needs to run on PRs to apply labels based on PR title patterns
+    # Only runs on push to main - creates/updates draft release notes
     permissions:
       contents: write
       pull-requests: write
@@ -34,7 +30,6 @@ jobs:
   upload_release_assets:
     name: Upload Release Assets
     needs: [update_release_draft]
-    # Only run on push to main, not on PRs (autolabeler)
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:

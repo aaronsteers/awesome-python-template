@@ -1,11 +1,15 @@
 # Semantic PR Title Validation
 #
-# This workflow validates PR titles follow conventional commit format.
-# Release Drafter's autolabeler automatically applies labels based on PR title patterns
-# (e.g., "feat:" -> enhancement -> minor, "fix:" -> bug -> patch).
+# This workflow validates PR titles follow conventional commit format and applies
+# labels automatically based on the title.
 #
-# The semantic PR title check ensures titles follow the format, and the autolabeler
-# handles the rest - no manual label check needed.
+# Jobs:
+# 1. validate-pr-title - Ensures PR titles follow semantic format (feat:, fix:, etc.)
+# 2. autolabel - Uses Release Drafter's autolabeler to apply labels based on title
+#    (e.g., "feat:" -> enhancement -> minor, "fix:" -> bug -> patch)
+#
+# Note: The autolabeler uses the same release-drafter.yml config but only applies
+# labels when triggered from PR events (it doesn't create/update draft releases).
 
 name: Semantic PR Title Validation
 
@@ -13,10 +17,23 @@ on:
   pull_request:
     types: [opened, edited, synchronize, ready_for_review]
 
-permissions:
-  pull-requests: read
-
 jobs:
+  # Apply labels based on PR title using Release Drafter's autolabeler
+  autolabel:
+    name: Auto-label PR
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      # Note: When called on PR events, release-drafter only runs the autolabeler
+      # (it doesn't create/update draft releases - that only happens on push to main)
+      - uses: release-drafter/release-drafter@v6
+        with:
+          config-name: release-drafter.yml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   validate-pr-title:
     name: Validate PR Title
     runs-on: ubuntu-latest

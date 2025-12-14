@@ -130,8 +130,8 @@ jobs:
       contents: write
     environment:
       name: PyPI
-      # TODO: Change to https://pypi.org/p/{my-package-name/ when ready for production
-      url: https://test.pypi.org/project/awesome-python-template/
+      # TODO: Update and uncomment:
+      # url: https://pypi.org/p/{my-package-name}/
     if: >
       (github.event_name == 'push' &&
        startsWith(github.ref, 'refs/tags/v')) ||
@@ -160,5 +160,5 @@ jobs:
         # Uses GitHub OIDC for passwordless authentication (see header comment)
         uses: pypa/gh-action-pypi-publish@v1.13.0
         with:
-          # TODO: Remove repository-url when ready to publish to real PyPI
+          # TODO: Delete this override to enable "real" publish:
           repository-url: https://test.pypi.org/legacy/

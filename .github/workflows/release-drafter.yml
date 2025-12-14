@@ -64,20 +64,66 @@ jobs:
           UV_DYNAMIC_VERSIONING_BYPASS: ${{ steps.version.outputs.version }}
         run: uv build
 
-      - name: Upload wheel to draft release
-        uses: svenstaro/upload-release-action@v2
+      - name: Upload assets to draft release
+        uses: actions/github-script@v7
+        env:
+          RELEASE_ID: ${{ needs.update_release_draft.outputs.release_id }}
         with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: dist/*.whl
-          tag: ${{ needs.update_release_draft.outputs.tag_name }}
-          overwrite: true
-          file_glob: true
-
-      - name: Upload sdist to draft release
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: dist/*.tar.gz
-          tag: ${{ needs.update_release_draft.outputs.tag_name }}
-          overwrite: true
-          file_glob: true
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const releaseId = process.env.RELEASE_ID;
+            
+            // Get list of files in dist/
+            const distDir = 'dist';
+            const files = fs.readdirSync(distDir);
+            
+            for (const file of files) {
+              const filePath = path.join(distDir, file);
+              const stat = fs.statSync(filePath);
+              
+              if (!stat.isFile()) continue;
+              
+              // Determine content type
+              let contentType = 'application/octet-stream';
+              if (file.endsWith('.whl')) {
+                contentType = 'application/zip';
+              } else if (file.endsWith('.tar.gz')) {
+                contentType = 'application/gzip';
+              }
+              
+              console.log(`Uploading ${file} to release ${releaseId}...`);
+              
+              // Check if asset already exists and delete it (for overwrite behavior)
+              const { data: existingAssets } = await github.rest.repos.listReleaseAssets({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                release_id: parseInt(releaseId),
+              });
+              
+              const existingAsset = existingAssets.find(a => a.name === file);
+              if (existingAsset) {
+                console.log(`Deleting existing asset ${file}...`);
+                await github.rest.repos.deleteReleaseAsset({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  asset_id: existingAsset.id,
+                });
+              }
+              
+              // Upload the asset
+              const data = fs.readFileSync(filePath);
+              await github.rest.repos.uploadReleaseAsset({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                release_id: parseInt(releaseId),
+                name: file,
+                data: data,
+                headers: {
+                  'content-type': contentType,
+                  'content-length': stat.size,
+                },
+              });
+              
+              console.log(`Successfully uploaded ${file}`);
+            }

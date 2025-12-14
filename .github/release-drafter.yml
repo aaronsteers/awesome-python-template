@@ -26,14 +26,15 @@ version-resolver:
       - "minor"
       - "enhancement"
       - "feature"
-      # Semver rules are different before "1.0" If your project is v0.x, you
-      # don't want to auto-bump to 1.0.
-      # Uncomment and dedent if when/if you want to auto-select a major version
-      # bump.
-      # major:
-      #  labels:
-      # - "major"
-      # - "breaking"
+      - "breaking"
+  # Semver rules are different before "1.0" If your project is v0.x, you
+  # don't want to auto-bump to 1.0.
+  # Uncomment and dedent if when/if you want to auto-select a major version
+  # bump.
+  # major:
+  #   labels:
+  #     - "major"
+  #     - "breaking"
   patch:
     labels:
       - "patch"

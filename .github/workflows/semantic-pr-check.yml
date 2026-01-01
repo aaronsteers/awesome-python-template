@@ -22,7 +22,12 @@ jobs:
   # Skip if 'edited' event but title wasn't changed (e.g., only description was edited)
   autolabel:
     name: Auto-label PR
-    if: ${{ github.event.action != 'edited' || github.event.changes.title.from != '' }}
+    if: >
+      github.event.action != 'edited'
+      || (
+        github.event.changes.title &&
+        github.event.changes.title.from != ''
+      )
     runs-on: ubuntu-latest
     permissions:
       contents: read

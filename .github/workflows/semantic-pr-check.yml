@@ -18,10 +18,12 @@ on:
     types: [opened, edited, ready_for_review]
 
 jobs:
-  # Apply labels based on PR title using Release Drafter's autolabeler
-  # Skip if 'edited' event but title wasn't changed (e.g., only description was edited)
   autolabel:
     name: Auto-label PR
+    # Apply labels based on PR title using Release Drafter's autolabeler.
+    # Skip if 'edited' event but the title wasn't changed (e.g., only description was edited).
+    # Skipping unnecessary runs reduces unlabel-relabel spam on the PR.
+    # Some notification triggers run upon label additions, so this also prevents notification spam.
     if: >
       github.event.action != 'edited'
       || (

@@ -5,6 +5,10 @@ on:
     branches:
       - main
 
+concurrency:
+  group: release-drafter
+  cancel-in-progress: false
+
 jobs:
   update_release_draft:
     # Only runs on push to main - creates/updates draft release notes
@@ -14,7 +18,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # Drafts the next Release notes as Pull Requests are merged into "main"
-      - uses: release-drafter/release-drafter@v6
+      # Pinned to v6.0.0 to avoid v6.1.0 bug (release-drafter/release-drafter#1425)
+      - uses: release-drafter/release-drafter@v6.0.0
         id: release-drafter
         with:
           config-name: release-drafter.yml

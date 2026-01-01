@@ -61,6 +61,13 @@ jobs:
 
   validate-pr-title:
     name: Validate PR Title
+    # Skip if 'edited' event but the title wasn't changed (e.g., only description was edited)
+    if: >
+      github.event.action != 'edited'
+      || (
+        github.event.changes.title &&
+        github.event.changes.title.from != ''
+      )
     runs-on: ubuntu-latest
     steps:
       - name: Check semantic PR title

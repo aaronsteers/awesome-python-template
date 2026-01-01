@@ -15,7 +15,7 @@ name: Semantic PR Title Validation
 
 on:
   pull_request:
-    types: [opened, edited, synchronize, ready_for_review]
+    types: [opened, edited, ready_for_review]
 
 jobs:
   # Apply labels based on PR title using Release Drafter's autolabeler
@@ -42,11 +42,11 @@ jobs:
             dependencies
             breaking
 
-      # Note: When called on PR events, release-drafter only runs the autolabeler
-      # (it doesn't create/update draft releases - that only happens on push to main)
+      # Run release-drafter with disable-releaser to only apply labels (not create releases)
       - uses: release-drafter/release-drafter@v6
         with:
           config-name: release-drafter.yml
+          disable-releaser: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

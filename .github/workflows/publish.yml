@@ -149,6 +149,18 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Disable direct references for build
+        run: |
+          # Forcibly disable allow-direct-references to catch git dependencies at build time.
+          # If the build fails here, it means there are git-based dependencies that need to be
+          # replaced with PyPI packages or tagged versions before publishing.
+          # This is simpler than writing a custom dependency parser.
+          if grep -q 'allow-direct-references = true' pyproject.toml; then
+            echo "Disabling allow-direct-references for build validation..."
+            sed -i 's/allow-direct-references = true/allow-direct-references = false/' pyproject.toml
+            echo "If the build fails, replace git dependencies with PyPI packages or tagged versions."
+          fi
+
       - name: Build package
         env:
           # Use UV_DYNAMIC_VERSIONING_BYPASS to override the version in pyproject.toml

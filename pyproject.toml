@@ -42,6 +42,12 @@ vcs = "git"
 style = "pep440"
 fallback-version = "0.0.0"
 
+[tool.hatch.metadata]
+# We allow git-based dependencies during development.
+# However, PyPI does not allow this so we toggle to `false` in CI build checks
+# to ensure dependencies are properly pinned before merge.
+allow-direct-references = true
+
 # Deptry configuration for dependency analysis
 # https://deptry.com/
 # Search "deptry" in this repo to find where to ignore false positives

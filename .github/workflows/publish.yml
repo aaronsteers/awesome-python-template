@@ -151,7 +151,10 @@ jobs:
 
       - name: Disable direct references for build check
         # Forcibly disable allow-direct-references to catch git dependencies at build time.
-        run: sed -i 's/allow-direct-references *= *true/allow-direct-references = false/' pyproject.toml
+        run: |
+          echo "Before:" && grep allow-direct-references pyproject.toml
+          sed -i 's/allow-direct-references *= *true/allow-direct-references = false/' pyproject.toml
+          echo "After:" && grep allow-direct-references pyproject.toml
 
       - name: Build package
         env:

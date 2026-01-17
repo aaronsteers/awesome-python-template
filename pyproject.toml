@@ -1,14 +1,18 @@
 [project]
+# TK-TODO: Update the project name to match your package name
 name = "awesome-python-template"
 dynamic = ["version"]
+# TK-TODO: Update the project description
 description = "A modern Python project template with best practices and tooling"
 readme = "README.md"
+# TK-TODO: Update the author information
 authors = [
     { name = "Aaron Steers", email = "aaron@aaronsteers.com" }
 ]
 requires-python = ">=3.10"
 dependencies = []
 license = { file = "LICENSE" }
+# TK-TODO: Update keywords for your project
 keywords = ["template", "scaffold", "python", "modern"]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -75,7 +79,7 @@ pep621_dev_dependency_groups = ["dev"]
 # Ignore Jupyter notebooks
 ignore_notebooks = false
 
-# Known first-party modules (your own packages)
+# TK-TODO: Update known_first_party to match your package name
 known_first_party = [
     "awesome_python_template",
 ]

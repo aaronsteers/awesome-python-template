@@ -72,7 +72,7 @@ instance/
 docs/_build/
 
 # pdoc3 documentation
-docs/awesome_python_template/
+docs/generated/
 
 # PyBuilder
 .pybuilder/

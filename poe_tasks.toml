@@ -25,7 +25,7 @@ install-prod = "uv sync"
 build = "uv build"
 
 # Documentation with pdoc3
-docs = "pdoc --html --output-dir docs awesome_python_template --force"
+docs = "pdoc --html --output-dir docs/generated awesome_python_template --force"
 docs-serve = "pdoc --http : awesome_python_template"
 
 # Development helpers

@@ -1,0 +1,70 @@
+# Setup Repository Labels
+#
+# This workflow creates the labels required for the autolabeler and release-drafter
+# to work correctly. Run this workflow once after creating a new repository from
+# this template.
+#
+# The autolabeler (in semantic-pr-check.yml) applies labels to PRs based on their
+# title prefix (e.g., "feat:" -> "enhancement", "fix:" -> "bug"). These labels are
+# then used by release-drafter to group changes in release notes.
+#
+# If these labels don't exist, the autolabeler silently fails and release notes
+# won't be properly grouped into categories.
+#
+# Usage:
+#   1. Go to Actions tab in your repository
+#   2. Select "Setup Repository Labels" workflow
+#   3. Click "Run workflow"
+#
+# This workflow is idempotent - it's safe to run multiple times.
+
+name: Setup Repository Labels
+
+on:
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+jobs:
+  create-labels:
+    name: Create Required Labels
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create labels for autolabeler
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const labels = [
+              { name: 'bug', color: 'd73a4a', description: 'Something isn\'t working' },
+              { name: 'enhancement', color: 'a2eeef', description: 'New feature or request' },
+              { name: 'chore', color: 'ededed', description: 'Maintenance tasks' },
+              { name: 'ci', color: 'ededed', description: 'CI/CD changes' },
+              { name: 'docs', color: 'ededed', description: 'Documentation changes' },
+              { name: 'testing', color: 'ededed', description: 'Test-related changes' },
+              { name: 'security', color: 'ededed', description: 'Security-related changes' },
+              { name: 'dependencies', color: '0366d6', description: 'Dependency updates' },
+              { name: 'breaking', color: 'b60205', description: 'Breaking changes' },
+            ];
+
+            for (const label of labels) {
+              try {
+                await github.rest.issues.createLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  name: label.name,
+                  color: label.color,
+                  description: label.description,
+                });
+                console.log(`Created label: ${label.name}`);
+              } catch (error) {
+                if (error.status === 422) {
+                  console.log(`Label already exists: ${label.name}`);
+                } else {
+                  throw error;
+                }
+              }
+            }
+
+            console.log('\nAll required labels are now configured!');
+            console.log('The autolabeler will automatically apply these labels to PRs based on their title prefix.');

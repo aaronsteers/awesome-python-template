@@ -13,7 +13,7 @@ jobs:
   tk-todo-check:  # IGNORE:TK
     name: Check for TK-TODO markers  # IGNORE:TK
     runs-on: ubuntu-latest
-    # Skip this check in the template repo itself - only enforce in repos created from the template
+    # TK-TODO: Delete this 'if' condition:
     if: github.repository != 'aaronsteers/awesome-python-template'
     steps:
       - name: Checkout code
@@ -23,16 +23,16 @@ jobs:
         run: |
           # Find all TK-TODO markers (case-insensitive) that don't have IGNORE:TK on the same line  # IGNORE:TK
           # Exit with error if any are found
-          
+
           echo "Checking for TK-TODO markers..."  # IGNORE:TK
-          
+
           # Use git ls-files to only check tracked files (excludes gitignored files like sdks/)
           # grep -i for case-insensitive matching
           # grep -v for excluding lines with IGNORE:TK
           # grep -n for line numbers
-          
+
           FOUND_TODOS=$(git ls-files | xargs grep -i -n "TK-TODO" 2>/dev/null | grep -i -v "IGNORE:TK" || true)  # IGNORE:TK
-          
+
           if [ -n "$FOUND_TODOS" ]; then
             echo ""
             echo "ERROR: Found TK-TODO markers that must be resolved before merge:"  # IGNORE:TK

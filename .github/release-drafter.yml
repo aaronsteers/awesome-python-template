@@ -1,9 +1,0 @@
-# Release Drafter Configuration
-# See: https://github.com/aaronsteers/semantic-pr-release-drafter/issues/1
-
-name-template: "v$RESOLVED_VERSION"
-tag-template: "v$RESOLVED_VERSION"
-change-template: "- $TITLE (#$NUMBER)"
-change-title-escapes: '\<*_&' # You can add # and @ to disable mentions, and add ` to disable code blocks.
-template: |
-  $CHANGES

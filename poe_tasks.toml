@@ -1,6 +1,9 @@
 # PoeThePoet task definitions
 # https://poethepoet.natn.io/
 
+[tool.poe]
+env = { PROJECT_NAME = "awesome_python_template" }
+
 [tool.poe.tasks]
 
 # Linting and formatting
@@ -11,7 +14,7 @@ format-check = "ruff format --check ."
 # Testing  
 test = "pytest"
 test-fast = "pytest -x"
-test-cov = "pytest --cov=awesome_python_template --cov-report=html"
+test-cov = "pytest --cov=${PROJECT_NAME} --cov-report=html"
 test-unit = "pytest -m unit"
 test-integration = "pytest -m integration"
 
@@ -25,8 +28,8 @@ install-prod = "uv sync"
 build = "uv build"
 
 # Documentation with pdoc3
-docs-generate = { shell = "pdoc --html --output-dir docs/_build awesome_python_template --force && mv docs/_build/awesome_python_template docs/generated && rm -rf docs/_build" }
-docs-preview = { shell = "pdoc --html --output-dir docs/_build awesome_python_template --force && mv docs/_build/awesome_python_template docs/generated && rm -rf docs/_build && open docs/generated/index.html" }
+docs-generate = "pdoc --html --output-dir docs/generated ${PROJECT_NAME} --force"
+docs-preview = { shell = "pdoc --html --output-dir docs/generated $PROJECT_NAME --force && open docs/generated/$PROJECT_NAME/index.html" }
 
 # Development helpers
 clean = "rm -rf .pytest_cache .coverage htmlcov dist .ruff_cache"

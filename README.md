@@ -1,3 +1,4 @@
+<!-- TK-TODO: Update the project name and delete/replace the README content below -->
 # Awesome Python Template
 
 A modern Python project template with best practices and cutting-edge tooling.

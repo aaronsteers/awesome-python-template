@@ -18,8 +18,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # Drafts the next Release notes as Pull Requests are merged into "main"
-      # Pinned to v6.0.0 to avoid v6.1.0 bug: https://github.com/release-drafter/release-drafter/issues/1425
-      - uses: release-drafter/release-drafter@v6.0.0
+      # See: https://github.com/aaronsteers/semantic-pr-release-drafter/issues/1
+      - uses: aaronsteers/semantic-pr-release-drafter@devin/1768702956-semantic-pr-release-p1
         id: release-drafter
         with:
           config-name: release-drafter.yml
@@ -41,17 +41,26 @@ jobs:
       contents: write
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
+      - name: Delete existing release assets
+        uses: andreaswilli/delete-release-assets-action@v4.0.0
+        # Delete all existing assets to ensure clean replacement
+        # This prevents stale artifacts from accumulating, e.g. if artifact names change
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ needs.update_release_draft.outputs.tag_name }}
+          deleteOnlyFromDrafts: true
+
       - name: Install uv
-        uses: astral-sh/setup-uv@v2
+        uses: astral-sh/setup-uv@v7
         with:
           version: "latest"
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.12"
 

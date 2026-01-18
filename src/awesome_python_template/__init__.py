@@ -1,4 +1,7 @@
-"""Awesome Python Template - A modern Python project scaffold."""
+"""Awesome Python Template - A modern Python project scaffold.
+
+.. include:: ../../README.md
+"""
 
 __version__ = "0.1.0"
 

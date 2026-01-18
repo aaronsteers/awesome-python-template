@@ -84,6 +84,12 @@ known_first_party = [
 # To ignore specific error codes globally, uncomment and modify:
 ignore = ["DEP004"]  # Ignore misplaced dev dependencies (common for test frameworks like pytest)
 
+[dependency-groups]
+dev = [
+    "pdoc3>=0.11.6",
+    "poethepoet>=0.37.0",
+]
+
 # To ignore specific packages for specific rules, use CLI options:
 # Examples:
 # --per-rule-ignores DEP001=package-name    # Ignore missing dependency

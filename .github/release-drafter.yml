@@ -1,81 +1,18 @@
+# Release Drafter Configuration
+# This config is used by aaronsteers/semantic-pr-release-drafter which parses
+# semantic commit titles directly (no labels needed).
+# See: https://github.com/aaronsteers/semantic-pr-release-drafter/issues/1
+
 name-template: "v$RESOLVED_VERSION"
 tag-template: "v$RESOLVED_VERSION"
-categories:
-  - title: "New Features ✨"
-    labels:
-      - "feature"
-      - "enhancement"
-  - title: "Bug Fixes 🐛"
-    labels:
-      - "fix"
-      - "bugfix"
-      - "bug"
-  - title: "Under the Hood ⚙️"
-    labels:
-      - "chore"
-      - "ci"
-      - "refactor"
-      - "testing"
-  - title: "Documentation 📖"
-    label: "docs"
 change-template: "- $TITLE (#$NUMBER)"
 change-title-escapes: '\<*_&' # You can add # and @ to disable mentions, and add ` to disable code blocks.
-version-resolver:
-  minor:
-    labels:
-      - "enhancement"
-      - "feature"
-      - "breaking"
-  # Semver rules are different before "1.0" If your project is v0.x, you
-  # don't want to auto-bump to 1.0.
-  # Uncomment and dedent if when/if you want to auto-select a major version
-  # bump.
-  # major:
-  #   labels:
-  #     - "breaking"
-  patch:
-    labels:
-      - "bug"
-      - "bugfix"
-      - "fix"
-      - "chore"
-      - "ci"
-      - "docs"
-      - "refactor"
-      - "testing"
-      - "dependencies"
-      - "security"
-  default: patch
 template: |
   $CHANGES
-autolabeler:
-  - label: "chore"
-    title:
-      - '/^chore(\(.*\))?\:/i'
-  - label: "testing"
-    title:
-      - '/^tests(\(.*\))?\:/i'
-  - label: "ci"
-    title:
-      - '/^ci(\(.*\))?\:/i'
-  - label: "bug"
-    title:
-      - '/^fix(\(.*\))?\:/i'
-  - label: "enhancement"
-    title:
-      - '/^feat(\(.*\))?/i'
-  - label: "docs"
-    title:
-      - '/^docs(\(.*\))?\:/i'
-  - label: "security"
-    title:
-      - '/^security(\(.*\))?\:/i'
-      - '/^fix(\(security\))?\:/i'
-  - label: "dependencies"
-    title:
-      - '/^chore\(deps\)\:/i'
-      - '/^build\(deps\)\:/i'
-  - label: "breaking"
-    title:
-      # Match conventional commit breaking change syntax: feat!: or fix!: etc.
-      - '/^[a-z]+(\([^)]+\))?!:/i'
+
+# Note: Categories and version-resolver are defined by commit type parsing in the fork,
+# not by labels. The fork will categorize based on semantic commit prefixes:
+# - feat: -> New Features (minor bump)
+# - fix: -> Bug Fixes (patch bump)
+# - chore:, ci:, docs:, refactor:, test: -> Under the Hood (patch bump)
+# - Breaking changes (!) -> handled per semver rules in the fork

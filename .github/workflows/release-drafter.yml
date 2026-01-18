@@ -19,7 +19,7 @@ jobs:
     steps:
       # Drafts the next Release notes as Pull Requests are merged into "main"
       # See: https://github.com/aaronsteers/semantic-pr-release-drafter/issues/1
-      - uses: aaronsteers/semantic-pr-release-drafter@main
+      - uses: aaronsteers/semantic-pr-release-drafter@devin/1768702956-semantic-pr-release-p1
         id: release-drafter
         with:
           config-name: release-drafter.yml

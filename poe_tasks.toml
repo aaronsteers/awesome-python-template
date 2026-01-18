@@ -25,8 +25,8 @@ install-prod = "uv sync"
 build = "uv build"
 
 # Documentation with pdoc3
-docs = { shell = "pdoc --html --output-dir docs/_build awesome_python_template --force && mv docs/_build/awesome_python_template docs/generated && rm -rf docs/_build" }
-docs-serve = "pdoc --http : awesome_python_template"
+docs-generate = { shell = "pdoc --html --output-dir docs/_build awesome_python_template --force && mv docs/_build/awesome_python_template docs/generated && rm -rf docs/_build" }
+docs-preview = { shell = "pdoc --html --output-dir docs/_build awesome_python_template --force && mv docs/_build/awesome_python_template docs/generated && rm -rf docs/_build && open docs/generated/index.html" }
 
 # Development helpers
 clean = "rm -rf .pytest_cache .coverage htmlcov dist .ruff_cache"

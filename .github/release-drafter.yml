@@ -1,6 +1,4 @@
 # Release Drafter Configuration
-# This config is used by aaronsteers/semantic-pr-release-drafter which parses
-# semantic commit titles directly (no labels needed).
 # See: https://github.com/aaronsteers/semantic-pr-release-drafter/issues/1
 
 name-template: "v$RESOLVED_VERSION"
@@ -9,10 +7,3 @@ change-template: "- $TITLE (#$NUMBER)"
 change-title-escapes: '\<*_&' # You can add # and @ to disable mentions, and add ` to disable code blocks.
 template: |
   $CHANGES
-
-# Note: Categories and version-resolver are defined by commit type parsing in the fork,
-# not by labels. The fork will categorize based on semantic commit prefixes:
-# - feat: -> New Features (minor bump)
-# - fix: -> Bug Fixes (patch bump)
-# - chore:, ci:, docs:, refactor:, test: -> Under the Hood (patch bump)
-# - Breaking changes (!) -> handled per semver rules in the fork

@@ -4,9 +4,6 @@
 #
 # Jobs:
 # 1. validate-pr-title - Ensures PR titles follow semantic format (feat:, fix:, etc.)
-#
-# Note: Labels are not used. The release drafter fork (aaronsteers/semantic-pr-release-drafter)
-# parses commit titles directly to categorize changes in release notes.
 
 name: Semantic PR Title Validation
 

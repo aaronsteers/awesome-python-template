@@ -18,7 +18,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # Drafts the next Release notes as Pull Requests are merged into "main"
-      # Using our fork which parses semantic commit titles directly (no labels needed)
       # See: https://github.com/aaronsteers/semantic-pr-release-drafter/issues/1
       - uses: aaronsteers/semantic-pr-release-drafter@main
         id: release-drafter

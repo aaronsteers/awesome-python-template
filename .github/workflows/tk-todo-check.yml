@@ -13,6 +13,8 @@ jobs:
   tk-todo-check:  # IGNORE:TK
     name: Check for TK-TODO markers  # IGNORE:TK
     runs-on: ubuntu-latest
+    # Skip this check in the template repo itself - only enforce in repos created from the template
+    if: github.repository != 'aaronsteers/awesome-python-template'
     steps:
       - name: Checkout code
         uses: actions/checkout@v6

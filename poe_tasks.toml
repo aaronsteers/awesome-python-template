@@ -29,7 +29,7 @@ build = "uv build"
 
 # Documentation with pdoc3
 docs-generate = "pdoc --html --output-dir docs/generated ${PROJECT_NAME} --force"
-docs-preview = { shell = "pdoc --html --output-dir docs/generated $PROJECT_NAME --force && open docs/generated/$PROJECT_NAME/index.html" }
+docs-preview = { shell = "pdoc --html --output-dir docs/generated ${PROJECT_NAME} --force && open docs/generated/${PROJECT_NAME}/index.html" }
 
 # Development helpers
 clean = "rm -rf .pytest_cache .coverage htmlcov dist .ruff_cache"

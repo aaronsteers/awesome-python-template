@@ -76,7 +76,7 @@ pep621_dev_dependency_groups = ["dev"]
 # Ignore Jupyter notebooks
 ignore_notebooks = false
 
-# TK-TODO: Update known_first_party to match your package name
+# TK-TODO: Update known_first_party to match your package name:
 known_first_party = [
     "awesome_python_template",
 ]

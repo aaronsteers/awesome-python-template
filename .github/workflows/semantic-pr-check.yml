@@ -10,12 +10,23 @@
 #
 # Note: The autolabeler uses the same release-drafter.yml config but only applies
 # labels when triggered from PR events (it doesn't create/update draft releases).
+#
+# Manual Usage (workflow_dispatch):
+#   Run this workflow manually with `create_labels: true` to create any missing
+#   labels required by the autolabeler. This is useful after creating a new repo
+#   from a template.
 
 name: Semantic PR Title Validation
 
 on:
   pull_request:
     types: [opened, edited, ready_for_review]
+  workflow_dispatch:
+    inputs:
+      create_labels:
+        description: 'Create missing labels required by the autolabeler'
+        type: boolean
+        default: false
 
 jobs:
   autolabel:
@@ -25,7 +36,8 @@ jobs:
     # Skipping unnecessary runs reduces unlabel-relabel spam on the PR.
     # Some notification triggers run upon label additions, so this also prevents notification spam.
     if: >
-      github.event.action != 'edited'
+      github.event_name == 'workflow_dispatch'
+      || github.event.action != 'edited'
       || (
         github.event.changes.title &&
         github.event.changes.title.from != ''
@@ -34,10 +46,50 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
+      issues: write
     steps:
+      # Create missing labels if requested via workflow_dispatch
+      - name: Create missing labels
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.create_labels }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const labels = [
+              { name: 'bug', color: 'd73a4a', description: 'Something isn\'t working' },
+              { name: 'enhancement', color: 'a2eeef', description: 'New feature or request' },
+              { name: 'chore', color: 'ededed', description: 'Maintenance tasks' },
+              { name: 'ci', color: 'ededed', description: 'CI/CD changes' },
+              { name: 'docs', color: 'ededed', description: 'Documentation changes' },
+              { name: 'testing', color: 'ededed', description: 'Test-related changes' },
+              { name: 'security', color: 'ededed', description: 'Security-related changes' },
+              { name: 'dependencies', color: '0366d6', description: 'Dependency updates' },
+              { name: 'breaking', color: 'b60205', description: 'Breaking changes' },
+            ];
+
+            for (const label of labels) {
+              try {
+                await github.rest.issues.createLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  name: label.name,
+                  color: label.color,
+                  description: label.description,
+                });
+                console.log(`Created label: ${label.name}`);
+              } catch (error) {
+                if (error.status === 422) {
+                  console.log(`Label already exists: ${label.name}`);
+                } else {
+                  throw error;
+                }
+              }
+            }
+            console.log('All required labels are now configured.');
+
       # Remove title-derived labels first to make autolabeler idempotent
       # (e.g., if PR title changes from "fix:" to "ci:", remove old "bug" label)
       - name: Remove title-derived labels
+        if: ${{ github.event_name == 'pull_request' }}
         uses: actions-ecosystem/action-remove-labels@v1
         with:
           labels: |
@@ -50,14 +102,37 @@ jobs:
             security
             dependencies
             breaking
+          fail_on_error: true
 
       # Run release-drafter with disable-releaser to only apply labels (not create releases)
-      - uses: release-drafter/release-drafter@v6
+      - name: Apply label based on PR title
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: release-drafter/release-drafter@v6
         with:
           config-name: release-drafter.yml
           disable-releaser: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Verify that a label was applied - fail if not
+      - name: Verify label was applied
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const expectedLabels = ['bug', 'enhancement', 'chore', 'ci', 'docs', 'testing', 'security', 'dependencies', 'breaking'];
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+            });
+            const prLabels = pr.labels.map(l => l.name);
+            const hasExpectedLabel = expectedLabels.some(label => prLabels.includes(label));
+            if (!hasExpectedLabel) {
+              core.setFailed(`No autolabel was applied to this PR. This usually means the required labels don't exist in the repository. Run this workflow manually with 'create_labels: true' to create them.`);
+            } else {
+              console.log(`PR has label(s): ${prLabels.filter(l => expectedLabels.includes(l)).join(', ')}`);
+            }
 
   validate-pr-title:
     name: Validate PR Title

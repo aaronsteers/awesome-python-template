@@ -2,7 +2,7 @@
 # https://poethepoet.natn.io/
 
 [tool.poe]
-env = { PROJECT_NAME = "awesome_python_template" }
+env = { SRC_MODULE = "awesome_python_template" }
 
 [tool.poe.tasks]
 
@@ -14,7 +14,7 @@ format-check = "ruff format --check ."
 # Testing  
 test = "pytest"
 test-fast = "pytest -x"
-test-cov = "pytest --cov=${PROJECT_NAME} --cov-report=html"
+test-cov = "pytest --cov=${SRC_MODULE} --cov-report=html"
 test-unit = "pytest -m unit"
 test-integration = "pytest -m integration"
 
@@ -28,8 +28,8 @@ install-prod = "uv sync"
 build = "uv build"
 
 # Documentation with pdoc3
-docs-generate = "pdoc --html --output-dir docs/generated ${PROJECT_NAME} --force"
-docs-preview = { shell = "pdoc --html --output-dir docs/generated ${PROJECT_NAME} --force && open docs/generated/${PROJECT_NAME}/index.html" }
+docs-generate = "pdoc --html --output-dir docs/generated ${SRC_MODULE} --force"
+docs-preview = { shell = "pdoc --html --output-dir docs/generated ${SRC_MODULE} --force && open docs/generated/${SRC_MODULE}/index.html" }
 
 # Development helpers
 clean = "rm -rf .pytest_cache .coverage htmlcov dist .ruff_cache"

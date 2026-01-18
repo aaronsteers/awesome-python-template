@@ -36,7 +36,10 @@ jobs:
         run: uv sync --group dev
 
       - name: Build documentation
-        run: uv run pdoc --html --output-dir docs/generated awesome_python_template --force
+        run: |
+          uv run pdoc --html --output-dir docs/_build awesome_python_template --force
+          mv docs/_build/awesome_python_template docs/generated
+          rm -rf docs/_build
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -44,7 +47,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: docs/generated/awesome_python_template
+          path: docs/generated
 
   deploy:
     name: Deploy to GitHub Pages

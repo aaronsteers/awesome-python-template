@@ -31,7 +31,10 @@ jobs:
         run: uv sync --group dev
 
       - name: Build documentation
-        run: uv run pdoc --html --output-dir docs/generated awesome_python_template --force
+        run: |
+          uv run pdoc --html --output-dir docs/_build awesome_python_template --force
+          mv docs/_build/awesome_python_template docs/generated
+          rm -rf docs/_build
 
       - name: Upload docs artifacts
         uses: actions/upload-artifact@v4

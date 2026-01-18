@@ -30,6 +30,7 @@ build = "uv build"
 # Documentation with pdoc3
 docs-generate = "pdoc --html --output-dir docs/generated ${SRC_MODULE} --force"
 docs-preview = { shell = "pdoc --html --output-dir docs/generated ${SRC_MODULE} --force && open docs/generated/${SRC_MODULE}/index.html" }
+get-generated-docs-dir = "echo docs/generated/${SRC_MODULE}"
 
 # Development helpers
 clean = "rm -rf .pytest_cache .coverage htmlcov dist .ruff_cache"

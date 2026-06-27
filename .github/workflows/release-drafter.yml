@@ -28,21 +28,22 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Build package
-        run: uv build
-
-      - name: Create draft release with assets (not ready)
+      - name: Create draft release (not ready)
         uses: aaronsteers/semantic-pr-release-drafter@v2.1.0
-        id: release-drafter
+        id: draft
         with:
           not-ready: true
-          attach-files: |
-            dist/*.whl
-            dist/*.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Finalize draft release (remove banner)
+      - name: Build package
+        run: uv build
+
+      - name: Attach assets and finalize draft
         uses: aaronsteers/semantic-pr-release-drafter@v2.1.0
+        with:
+          attach-files: |
+            dist/*.whl
+            dist/*.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

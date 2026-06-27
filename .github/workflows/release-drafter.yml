@@ -28,12 +28,19 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Create draft release (not ready)
+        uses: aaronsteers/semantic-pr-release-drafter@v2.1.0
+        id: not-ready-draft
+        with:
+          not-ready: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build package
         run: uv build
 
-      - name: Create or update draft release
-        uses: aaronsteers/semantic-pr-release-drafter@v0.4.0
-        id: release-drafter
+      - name: Attach assets and finalize draft
+        uses: aaronsteers/semantic-pr-release-drafter@v2.1.0
         with:
           attach-files: |
             dist/*.whl
